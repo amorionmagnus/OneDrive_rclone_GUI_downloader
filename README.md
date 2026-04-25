@@ -2,6 +2,8 @@
 
 OneDrive rclone GUI Downloader v0.16
 
+Last version: https://github.com/amorionmagnus/OneDrive_rclone_GUI_downloader/releases/tag/v0.16
+
 This is a Tkinter GUI wrapper for rclone.
 
 Main features:
