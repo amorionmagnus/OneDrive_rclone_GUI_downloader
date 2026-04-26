@@ -1,90 +1,220 @@
 # OneDrive_rclone_GUI_downloader
 
-OneDrive rclone GUI Downloader v0.16
+OneDrive rclone GUI Downloader v0.2.9
 
-Lastest version: https://github.com/amorionmagnus/OneDrive_rclone_GUI_downloader/releases/tag/v0.16
+This release includes 3 files:
+• the main Python application: rclone_gui_downloader.py
+• the macOS setup script: MacOS_setup.sh
+• the double-click launcher for the main application: run_rclone_gui_downloader.command
 
-This is a Tkinter GUI wrapper for rclone.
+Main features
+•	macOS-friendly graphical interface for downloading OneDrive content via rclone.
+•	Uses an existing rclone OneDrive remote or helps configure it through Microsoft OAuth.
+•	Automatically opens the Microsoft OAuth flow in the browser when OneDrive is not configured.
+•	Does not store OAuth tokens inside the application files; authentication remains managed by rclone.
+•	Loads OneDrive files and folders into an expandable file-tree view.
+•	Shows both files and folders, not only directories.
+•	Supports expanding and collapsing folders to arbitrary depth.
+•	Loads the tree up to a default depth and can map deeper folders on demand.
+•	Sequentially expands all subfolders when requested, avoiding overlapping rclone tree requests.
+•	Hides expand indicators for folders known to be empty.
+•	Supports adding items from OneDrive paths or own-drive links where resolvable.
+•	For public/shared links, guides the user to add a shortcut to “My files” before downloading.
+•	Three-state file-tree selection:
+•	empty: not selected,
+•	full: selected for queue/download,
+•	partial: nested children selected, but not the whole folder.
+•	Selecting a folder selects only not-yet-downloaded children by default.
+•	Already downloaded green items are not selected automatically when selecting a parent folder.
+•	Already downloaded items can still be manually selected if the user wants to re-download them.
+•	Parent folder selection updates automatically based on child states.
+•	If all children are selected, the parent becomes fully selected.
+•	If some children are selected, the parent becomes partially selected.
+•	If all children are unselected, the parent becomes unselected.
+•	Queue-based download workflow:
+•	Add to queue adds selected file-tree items to the queue,
+•	selected file-tree checkboxes are cleared after queueing,
+•	Remove from queue removes checked queue items,
+•	queue items have their own selection checkbox.
+•	Download controls:
+•	Start begins queue processing,
+•	Pause temporarily suspends active rclone processes,
+•	Resume continues suspended transfers,
+•	Stop terminates active transfers and clears the queue.
+•	Adjustable simultaneous transfer count with a Transfers 1–5 slider.
+•	Default transfer count is 3.
+•	Transfer-count changes are applied dynamically:
+•	increasing starts additional queued jobs,
+•	decreasing does not interrupt active transfers; it simply prevents new ones from starting until the active count drops.
+•	Queue and file-tree color/status system:
+•	blue: queued,
+•	yellow: active or partially completed/in progress,
+•	green: downloaded successfully,
+•	red: error,
+•	orange: local .partial file exists,
+•	neutral: not queued and not downloaded.
+•	Folder colors are aggregated from children:
+•	green only when all known children are downloaded,
+•	yellow when anything inside is active or partially completed,
+•	blue when all known children are queued,
+•	red when any child has an error,
+•	neutral when only some children are queued or no relevant status applies.
+•	Destination folder picker for choosing the local download directory.
+•	Detects already downloaded local files during Load data and colors the file tree accordingly.
+•	Preserves the original folder hierarchy in the destination directory.
+•	Creates selected empty folders locally.
+•	Downloads individual files with temporary .partial suffix first.
+•	Finalizes successful file downloads by renaming filename.ext.partial to filename.ext.
+•	Interrupted or unfinished downloads remain as .partial files.
+•	Retry logic preserves existing .partial files and attempts to continue/retry without deleting them.
+•	Conflict handling before downloads:
+•	replace existing files/folders,
+•	skip existing conflicts,
+•	keep both by renaming old local items with _old.
+•	Live Download progress table with status, transferred size, total size, percent, speed, ETA, elapsed time, and file count.
+•	Displays total current speed.
+•	Displays average speed.
+•	Displays queue ETA based on known remaining size and recent average speed.
+•	Dedicated transfer error panel with timestamps.
+•	Retry button activates only after a real download error occurs.
+•	Retry files with errors removes failed final outputs when appropriate and re-adds failed items to the queue.
+•	Download log records meaningful events only:
+•	item queued,
+•	transfer started,
+•	file completed,
+•	item completed,
+•	error occurred,
+•	pause/resume/stop,
+•	final queue summary.
+•	Progress chunks and ordinary Transferred: stats are not treated as errors.
+•	Completion log reports whether all queued downloads finished with or without errors.
+•	Close-window confirmation is always shown.
+•	If downloads are running, the close dialog includes a prominent warning.
+•	UI uses loading cursor and temporarily disables buttons while waiting for file-tree or server responses.
+•	Buttons remain usable during downloads except when a blocking tree/server operation is running.
+•	Includes macOS helper scripts for setup and .command permissions.
+•	Setup script can check/install Homebrew, Python, Tkinter support, and rclone.
+•	Project files avoid embedding private OAuth tokens, refresh tokens, tenant IDs, personal paths, or hardcoded user data.
+What changed from v0.1.6 to v0.2.9
+Selection and file-tree behavior
+• Added/expanded three-state selection logic for file-tree items:
+• empty,
+• full,
+• partial.
+• Folder selection now propagates to children more intelligently.
+• Newly loaded children inherit selection only when appropriate.
+• Parent folder state is recalculated from child states.
+• If all children are selected, the parent becomes fully selected.
+• If only some children are selected, the parent becomes partial.
+• If all children are unselected, the parent becomes empty.
+• Fixed the case where manually unselecting all children did not fully unselect the parent.
+• Removed visible stale Loading... placeholder rows from the tree.
+• Improved Expand all subfolders so expansion requests are queued sequentially instead of firing inconsistently.
+• Added final log message after the full tree has been mapped and expanded.
+• Empty folders no longer show an unnecessary expand marker.
+• Selecting a parent folder no longer automatically selects green, already-downloaded children.
+• When some children are already downloaded and skipped during selection, the parent becomes partial instead of full.
+• Green items can still be manually selected for re-download.
+• Fixed the issue where clicking the selection box on a folder could still select green subfolders.
 
-Main features:
+Queue model and download controls
+• Replaced direct Download behavior with a queue-based workflow.
+• Added Add to queue.
+• Added Remove from queue.
+• Added selectable queue rows in Download progress.
+• Added Start, Pause/Resume, and Stop controls.
+• Stop now terminates active transfers, clears the queue, and logs that the operation was stopped.
+• Pause now changes to Resume.
+• Pause temporarily suspends active rclone processes rather than clearing the queue.
+• Resume continues suspended transfers.
+• Active downloads are no longer stopped just because transfer count is reduced.
+• Transfer slider now controls how many jobs may run concurrently.
+• Default transfer count set to 3.
+• Transfer slider supports 1–5 simultaneous jobs.
+• Increasing transfers can start additional queued jobs.
+• Decreasing transfers prevents new jobs from starting until active transfers naturally drop to the new limit.
 
-	•	Graphical macOS-friendly interface for downloading OneDrive content through rclone.
-	•	Loads the OneDrive remote file tree directly from the configured rclone remote.
-	•	Displays both files and folders in an expandable tree view.
-	•	Supports recursive folder browsing with expand/collapse controls.
-	•	Loads the file tree up to a default depth of 5 during Load data.
-	•	Allows deeper folders to be loaded on demand.
-	•	Supports Expand all subfolders with sequential queued requests to avoid overlapping rclone calls.
-	•	Hides expand indicators for folders known to be empty.
-	•	Supports selecting individual files, whole folders, or nested items for download.
-	•	Uses a three-state download marker:
-	•	empty: nothing selected,
-	•	full: item selected for download,
-	•	partial: only nested child items are selected.
-	•	Automatically updates parent folders to partial state when deeper files or folders are selected.
-	•	Unselecting a parent folder clears selected child items.
-	•	Downloads selected items sequentially, not in parallel.
-	•	Preserves the original folder hierarchy in the destination directory.
-	•	Creates empty selected folders locally, even when rclone copy would otherwise skip them.
-	•	Uses rclone copy for folders and rclone copyto for individual files.
-	•	Provides a destination folder picker.
-	•	Detects local name conflicts before downloading.
-	•	Lets the user choose how to handle conflicts:
-	•	replace existing files/folders,
-	•	skip conflicting items,
-	•	keep both by renaming the old local item with _old.
-	•	Shows transfer progress, including downloaded size, total size, percentage, speed, ETA, elapsed time, and file count when available from rclone.
-	•	Includes a live rclone log panel.
-	•	Includes a dedicated error panel with timestamps.
-	•	Marks files with detected errors in red.
-	•	Displays file-specific error messages next to affected items.
-	•	Enables retrying failed file downloads after the transfer finishes.
-	•	Supports stopping an active download.
-	•	Changes the Download button into Stop while downloading.
-	•	Disables unrelated buttons during long-running operations.
-	•	Changes the cursor to a loading cursor while waiting for rclone or Graph responses.
-	•	Confirms application close when the user clicks the window close button.
-	•	Shows an additional red warning if downloads are still running during close.
-	•	Logs a final completion summary after all downloads finish, with or without errors.
-	•	Includes Add from link support:
-	•	resolves own-drive OneDrive links when possible,
-	•	expands the tree to the linked file/folder,
-	•	selects the linked item for download,
-	•	opens public/shared links in the browser when they need to be added manually as a shortcut.
-	•	Supports automatic rclone configuration if the onedrive: remote does not exist.
-	•	Asks only for the Microsoft Client ID during automatic setup.
-	•	Opens the Microsoft OAuth flow in the browser.
-	•	Stores OAuth tokens through rclone, not inside the application files.
-	•	Provides a Configure rclone button:
-	•	tests existing onedrive: configuration,
-	•	confirms when it works,
-	•	offers to remove and recreate it if needed.
-	•	Does not require a project config.ini.
-	•	Includes macOS helper scripts for setup and .command permissions.
-	•	Avoids storing private data such as OAuth tokens, refresh tokens, tenant IDs, or user-specific paths in the project files.
+Progress and speed display
+• Improved Download progress so transfer stats are shown there instead of in the error panel.
+• Fixed incorrect Total = 1 B display caused by misinterpreting rclone counters.
+• Percent display now includes downloaded size and total size, for example:
+42.1% (123.4 MB / 293.0 MB).
+• Added total current speed.
+• Renamed “10-min average speed” to Average speed.
+• Added queue ETA based on recent average speed and known remaining queue size.
+• Added per-item status in the progress table.
+• Added elapsed time and file-count information where available.
+• Reduced noisy log spam from repeated transfer chunks.
 
+Logging and error handling
+• Ordinary rclone progress lines such as Transferred:, Elapsed time, and Errors: 0 are no longer treated as errors.
+• Error panel now focuses on actual transfer errors.
+• Download log now records high-level events rather than every progress chunk.
+• After all queue work finishes, the log reports whether downloads completed with or without errors.
+• For completed files, the log now includes file size and duration.
+• Retry button now stays disabled until a real download error appears.
+• Retry files with errors now re-adds failed items to the queue instead of behaving like a general action.
+• Error status is reflected in both the file tree and download progress table.
+• File/tree status updates are logged where relevant.
 
+Status colors
+• Added or refined status colors across file tree and queue:
+• blue for queued,
+• yellow for active/partial/in-progress,
+• green for completed,
+• red for error,
+• orange for .partial,
+• neutral for no active status.
+• Folder coloring now depends on children, not just local folder existence.
+• A folder becomes green only when all known children are downloaded.
+• If only some children are downloaded, the folder becomes yellow, not green.
+• If all known children are queued, the folder becomes blue.
+• If only some children are queued, the folder remains neutral/partial rather than fully blue.
+• If any child has an error, the folder reflects error state.
+• File tree is analyzed during Load data against the destination path to mark already downloaded items.
 
-How to run:
-1. Put these files in one folder, for example:
-   /Users/user/Downloads/OneDriveShared/_prog
-2. Make sure rclone is installed:
-   brew install rclone
-3. Run:
-   python3 rclone_gui_downloader.py
-   or double-click run_onedrive_rclone_downloader.command (before first use run enable_command_permissions.sh in the same folder).
+Partial downloads
+• Removed unsupported rclone --partial flag after it caused unknown flag: --partial.
+• Implemented application-level .partial handling.
+• Individual files now download first to filename.ext.partial.
+• After successful completion, .partial is renamed to the final filename.
+• Interrupted downloads leave .partial files in place.
+• Existing .partial files are marked orange in the file tree.
+• Retry no longer deletes existing .partial files by default.
+• Retry attempts to continue/retry using the existing partial output where possible.
 
-Fast install on MacOS:
-1. Put these files in one folder, for example:
-   /Users/user/Downloads/OneDriveShared/_prog
-2. Run MacOS_setup.sh with Admin rights in Terminal
+Add-from-link and deep-path handling
+• Improved Add from link for own-drive links.
+• If the linked item is already loaded in memory, the app expands the path and selects it.
+• If the linked item is deeper than the loaded tree, the app requests additional parent/child levels as needed.
+• Added matching improvements using path and OneDrive/rclone item identifiers where possible.
+• Public/shared links still require manual “Add shortcut to My files” when they cannot be directly resolved by rclone/Graph.
 
-cd /Users/user/Downloads/OneDriveShared/_prog
-chmod +x MacOS_setup.sh
-./MacOS_setup.sh
+Conflict handling and local filesystem behavior
+• Added conflict detection before downloading.
+• Added user choices for conflicts:
+• replace old with new,
+• keep old and skip,
+• keep both by renaming old local item with _old.
+• Selected empty folders are created locally.
+• Existing downloaded items are detected on load and colored accordingly.
+• Folder hierarchy is preserved under the chosen destination.
 
-Safety note:
-The app uses rclone copy/copyto, not sync, so it should not delete local files.
+UI behavior
+• Loading cursor appears while waiting for rclone/Graph/tree responses.
+• Buttons are blocked only during tree/server response operations, not during normal downloading.
+• Close-window behavior asks for confirmation.
+• If downloads are running, the close warning is more explicit.
+• Renamed status terminology so the UI uses Status, not “X color”.
+• Removed unnecessary config-file workflow and related UI from earlier versions.
+
+Setup and packaging
+• Added/merged macOS setup scripts.
+• Setup script checks for Homebrew, Python, Tkinter support, and rclone.
+• Setup script sets executable permissions for the .command launcher.
+• Setup script removes macOS quarantine flag when needed.
+• Project no longer requires config.ini for fixed constants.
+• Added safer project hygiene by avoiding embedded private data such as user paths, Client IDs, tenant IDs, and OAuth tokens.
 
 
 
