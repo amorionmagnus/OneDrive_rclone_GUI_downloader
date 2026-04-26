@@ -2,6 +2,8 @@
 
 OneDrive rclone GUI Downloader
 
+https://github.com/amorionmagnus/OneDrive_rclone_GUI_downloader/releases/tag/v0.2.9
+
 This release includes 3 files:
 • the main Python application: rclone_gui_downloader.py
 • the macOS setup script: MacOS_setup.sh
